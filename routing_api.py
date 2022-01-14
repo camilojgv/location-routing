@@ -2,7 +2,7 @@ import requests
 import json
 import math
 import datetime
-from here_api_oauth_token import get_token
+from here_location_services.here_api_oauth_token import get_token
 import traceback
 import sys
 
