@@ -5,6 +5,7 @@ import json
 import time
 import nearest_neighbour
 import clustering
+import os
 
 def get_clients(hardware_stores_path):
     clients = pd.read_csv(hardware_stores_path)
@@ -54,16 +55,19 @@ def plot_client_routes(open_w, warehouses, routes, clients):
         if key in open_w:
             plt.scatter(value['long'], value['lat'], marker='^', color='red')
             #plot routes that start from the depot
-    
-    plt.show()
-    
-    # for c in clients:
-    #     plt.scatter(data_json[int(c)]['long'], data_json[int(c)]['lat'], marker='o', color='black')
+            for c in clients:
+                
+                plt.scatter(value['long'], value['lat'], marker='o', color='black')
     
     # visited = list()
-    # tour_length = 0
     # do_magic = True
     # temp_clients = clients.copy()
+    plt.show()
+    
+    
+    # 
+    # tour_length = 0
+    # 
     # first_client = random.choice(temp_clients)
     # visited.append(first_client)
     # temp_clients.remove(first_client) 
@@ -129,15 +133,11 @@ def get_lists(vars:dict):
 
 if __name__=='__main__':
     start_time = time.time()
-    # params = {'client_sample': 300,
-    #             'warehouse_sample': 10,
-    #             'max_distance': 25,
-    #             'max_duration': 7*60, #between 7 and 8 hours
-    #             'max_weight': 9000}
-
-    #fl_model = facility_location.main(params)
+    #cwd = os.getcwd()
+    # print(cwd)
+    # print(cwd + '\optimization_results\\flp_results_rcopt_c860_w35.npy')
     print('get results from FL problem\n')
-    fl_model = np.load('flp_results_rcopt_c860_w35.npy',allow_pickle='TRUE').item()
+    fl_model = np.load('optimization_results/flp_results_rcopt_c860_w35.npy',allow_pickle='TRUE').item()
     print('get other information, warehouses, clients, routes\n')
     warehouse_path = 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/potential_warehouses.csv'
     hardware_stores_path = 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/client_hardwares.csv'
