@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import random
 import matplotlib.pyplot as plt
-import sys
+import time
 
 def tour_length(tour:list,dist_matrix:dict) -> int:
     t_lenght = 0
@@ -18,12 +18,19 @@ def tour_length(tour:list,dist_matrix:dict) -> int:
             t_lenght += dist_matrix[str(previous_node)]["destinations"][str(node)]["distance(km)"]
     return t_lenght
 
-def get_client_set(clients:dict):
-    new_clients = list()
-    for c in clients:
-        if c['point_type'] == 'client':
-            new_clients.append(int(c['id']))
-    return new_clients 
+def get_client_set(clients:dict, c_sample:int):
+    C = list()
+    do_science = True
+    c_list = [int(c['id']) for c in clients if c['point_type'] == 'client']
+    while do_science:
+        c_length = len(C)
+        rand_c = random.choice(c_list)
+        if rand_c not in C and c_length <= c_sample:
+            C.append(rand_c)
+        if c_length == c_sample:
+            do_science = False
+    print('Clients info -> \n\tsample size: {}\n\tclient list: {}'.format(c_sample,C))
+    return C 
 
 def get_warehouse_set(warehouses:object, w_sample:int):
     np.random.seed()
@@ -41,7 +48,8 @@ def get_warehouse_set(warehouses:object, w_sample:int):
         if rand_wh not in W and w_length <= w_sample:
             W.append(rand_wh) 
         if w_length == w_sample:  
-            do_science = False        
+            do_science = False  
+    print('Depots info -> \n\tsample size: {}\n\tdepot list: {}'.format(w_sample,W))      
     return W
 
 def get_routes_matrix(W, cluster_routes):
@@ -146,34 +154,25 @@ def optimize(sets:dict, params:dict):
     return result_dict 
 
 def main(params:dict):
-    warehouse_path = {'tul_pc': 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/potential_warehouses.csv',
-                    'home_pc': 'E:/Main User/Documents/Repositories/VRP/Data/potential_warehouses.csv'}
-
-    distance_matrix_path = {'tul_pc':'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/distance_matrix_slow.json',
-                            'home_pc':'E:/Main User/Documents/Repositories/VRP/Data/distance_matrix_slow.json'}
-    
-    hardware_stores_path = {'tul_pc': 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/client_hardwares.csv'}
-    nodes_path = {'tul_pc': 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/problem_set.json'}
-    clusters_path = {'tul_pc': 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/tsp_clusters.json'}
-    loc = 'tul_pc'
-    warehouses = pd.read_csv(warehouse_path[loc])
+    init_time = time.time()
+    warehouses = pd.read_csv('Data/potential_warehouses.csv')
     warehouses.columns = ['lat', 'long', 'cost', 'area', 'own','weight']
     warehouses.filter(items=['lat', 'long', 'cost', 'area', 'own'])
-    nodes_json = open(nodes_path[loc])
+    nodes_json = open('Data/problem_set.json')
     nodes_set = json.load(nodes_json)
-    clients_hardware = pd.read_csv(hardware_stores_path[loc])
-    d_matrix_json = open(distance_matrix_path[loc])
+    clients_hardware = pd.read_csv('Data/client_hardwares.csv')
+    d_matrix_json = open('Data/distance_matrix_slow.json')
     distance_matrix = json.load(d_matrix_json)
-    clust_json = open(clusters_path[loc])
-    clusters = json.load(clust_json)
+    
+    clusters = clustering.main(distance_matrix,clients_hardware,params)
         
     W = get_warehouse_set(warehouses, params['warehouse_sample'])
-    C = get_client_set(nodes_set)
+    C = get_client_set(nodes_set, params['client_sample'])
     W_capacity = warehouse_capacity(W, warehouses)
     O = open_costs(W, warehouses)
     
     #iterate through all clusters and find best results
-    best_model = {'fo':0,'variables':None,'iteration':0}
+    best_model = {'fo':0,'variables':None,'iteration':0,'exc_time':0}
     
     for n_iter,g in enumerate(clusters.keys()):
         G = [int(j) for j in clusters[g].keys()]
@@ -197,15 +196,26 @@ def main(params:dict):
                 best_model['variables'] = results['vars']
                 best_model['iteration'] = n_iter
                 best_model['total weight'] = iter_weight 
+    best_model['exc_time'] = time.time()-init_time
     return best_model
 
 if __name__=='__main__':
     print('facility location optimization')
-    params = {'client_sample': 860,
-                'warehouse_sample': 35,
-                'max_distance': 25,
-                'max_duration': 7*60, #between 7 and 8 hours
-                'max_weight': 9000}
-    results = main(params)
-    np.save('flp_results_rcopt_c860_w35.npy', results)
-    print('finished...')
+    instances = [(20,5), (50,5), (50,10), 
+                (100,5), (100,10), (100,20),
+                (150,10),(150,20), (200,10),
+                (200,20), (300,10), (500,10), (700,10),
+                (860,10), (300,20), (500,20),
+                (700,20), (860,20),(300,35),
+                (500,35), (700,35),(860,35)]
+    for (c,w) in instances:
+        params = {'client_sample': c,
+                    'warehouse_sample': w,
+                    'max_distance': 25,
+                    'max_duration': 8*60, 
+                    'max_weight': 8000}
+        results = main(params)
+        np.save('optimization_results/flp_results_rcopt_c{}_w{}.npy'.format(c,w), results)
+    
+    print('finished...') 
+     

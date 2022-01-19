@@ -55,9 +55,12 @@ def plot_client_routes(open_w, warehouses, routes, clients):
         if key in open_w:
             plt.scatter(value['long'], value['lat'], marker='^', color='red')
             #plot routes that start from the depot
-            for c in clients:
+            depot_routes = [r for (w,r) in routes.keys() if w == key]
+            for dr in depot_routes:
+                routes[dr]['id_route']
                 
-                plt.scatter(value['long'], value['lat'], marker='o', color='black')
+                
+                plt.scatter(c['long'], c['lat'], marker='o', color='black')
     
     # visited = list()
     # do_magic = True
@@ -133,16 +136,14 @@ def get_lists(vars:dict):
 
 if __name__=='__main__':
     start_time = time.time()
-    #cwd = os.getcwd()
-    # print(cwd)
-    # print(cwd + '\optimization_results\\flp_results_rcopt_c860_w35.npy')
+ 
     print('get results from FL problem\n')
     fl_model = np.load('optimization_results/flp_results_rcopt_c860_w35.npy',allow_pickle='TRUE').item()
     print('get other information, warehouses, clients, routes\n')
-    warehouse_path = 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/potential_warehouses.csv'
-    hardware_stores_path = 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/client_hardwares.csv'
-    clusters_path = 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/tsp_clusters.json'
-    distance_matrix_path = 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/distance_matrix.json'
+    warehouse_path = 'Data/potential_warehouses.csv'
+    hardware_stores_path = 'Data/client_hardwares.csv'
+    clusters_path = 'Data/tsp_clusters.json'
+    distance_matrix_path = 'Data/distance_matrix.json'
     dm_json = open(distance_matrix_path)
     dist_matrix = json.load(dm_json)
 
@@ -154,7 +155,8 @@ if __name__=='__main__':
     routes = get_routes(clusters_path, fl_model['iteration'], depot_routes, dist_matrix)
     print('\troutes -> ok\n')
     
-    plot_open_depots(open_depots, warehouses)
+    #plot_open_depots(open_depots, warehouses)
+    plot_client_routes(open_depots, warehouses, routes, clients)
     summarize_dict = dict()
     for od in open_depots:
         summarize_dict[od] = {'avg_distance': np.mean([routes[(w,r)]['distance'] for (w,r) in routes.keys() if w == od]),

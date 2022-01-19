@@ -133,9 +133,6 @@ def main_clust(dist_matrix, clients, params):
     #while initial_tour != tour:
     while n_clusts < len(tour)-1:
         r = 0
-        sys.stdout.write('\r')
-        sys.stdout.write('iteration {}, Matrix progress {}'.format(n_clusts, round(n_clusts*100/len(tour),4)))
-        sys.stdout.flush()
         n_clusts += 1
         clusters[n_clusts] = dict()
         for i,node in enumerate(tour):
@@ -169,57 +166,22 @@ def main(dist_matrix, clients, params):
     counter = 0
     n1 = len(clusts.items())
     for key,value in clusts.items():
-        sys.stdout.write('\r')
-        sys.stdout.write('iteration {}, route optimization progress {}'.format(counter, round(counter*100/n1,4)))
-        sys.stdout.flush()
         main_dict[key] = dict()
         for routes in value.keys():
             tour, id_tour = nearest_neighbour.clusters(dist_matrix, clusts[key][routes]['route'])
-            new_lenght, dist_arcs = tour_length(tour, dist_matrix)
+            new_length, dist_arcs = tour_length(tour, dist_matrix)
             new_duration, time_arcs = tour_duration(tour, dist_matrix)
             new_weight = clusts[key][routes]['weight']
             main_dict[key][routes] = {'route': tour, 
                                     'id_route': id_tour,
-                                    'duration': new_duration,
-                                    'distance': round(new_lenght, 3),
+                                    'duration': round(new_duration, 3),
+                                    'distance': round(new_length, 3),
                                     'weight': new_weight}
-    saving_path = 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/tsp_clusters.json'
-    with open(saving_path, 'w') as file:
-        json.dump(main_dict, file)
+
     return main_dict
 
 if __name__ == '__main__':
-    start_time = time.time()
-    clients_path = {'tul_pc': 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/problem_set.json',
-                    'home_pc': 'E:/Main User/Documents/Repositories/VRP/Data/problem_set.json'}
-    
-    distance_matrix_path = {'tul_pc':'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/distance_matrix_slow.json',
-                            'home_pc':'E:/Main User/Documents/Repositories/VRP/Data/distance_matrix.json'}
-
-    warehouse_path = {'tul_pc': 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/potential_warehouses.csv',
-                    'home_pc': 'E:/Main User/Documents/Repositories/VRP/Data/potential_warehouses.csv'}
-
-    hardware_stores_path = {'tul_pc': 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/client_hardwares.csv'}
-    loc = 'tul_pc'
-    clients_json = open(clients_path[loc])
-    cj = json.load(clients_json)
-    clients = get_client_set(cj)
-    matrix_file = open(distance_matrix_path[loc])
-    dist_matrix = json.load(matrix_file)
-    
-    warehouses = pd.read_csv(warehouse_path[loc])
-    # Create insertion heuristics
-    # Let's extract a example from the json
-    #n_warehouses = 0
-    clients_hardware = pd.read_csv(hardware_stores_path[loc])
-    params = {'client_sample': 860,
-                'max_distance': 20,
-                'max_duration': 7*60, #between 7 and 8 hours
-                'max_weight': 9000}
-    G = main(dist_matrix, clients_hardware, params)
-    print('terminated')
-
-
+    print('clustering module')
 
     
     

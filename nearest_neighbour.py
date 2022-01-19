@@ -134,12 +134,6 @@ def clusters(dist_matrix:dict,tour:list):
     return visited, id_visited
 
 if __name__=='__main__':
-    
-    data_path = {'tul': 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/problem_set.json',
-                'home': 'E:/Main User/Documents/Repositories/VRP/Data/problem_set.json'}
-    distance_matrix_path = {'tul':'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/distance_matrix_all_nodes.json',
-                            'home':'E:/Main User/Documents/Repositories/VRP/Data/distance_matrix_all_nodes.json'}
-    place = 'tul'
     print('hello nn heuristic')
                     
             
