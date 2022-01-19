@@ -42,6 +42,10 @@ def get_routes(clusters_path, n_iter, depot_routes,dist_matrix):
                         'weight':tour_weight}
     return r_dict
 
+def get_coordinates(client_id:int, clients:list):
+    c_dict = [value for key,value in clients.items() if value['id'] == client_id]
+    return c_dict[0]
+
 def plot_open_depots(open_w, warehouses):
     for key,value in warehouses.items():
         if key in open_w:
@@ -50,59 +54,39 @@ def plot_open_depots(open_w, warehouses):
             plt.scatter(value['long'], value['lat'], marker='o', color='white')
     plt.show()
 
+def plot_cr(route_clients:list, clients:dict, col:str):
+    for rc in route_clients[1:len(route_clients)-2]:
+        client = get_coordinates(rc,clients)
+        plt.scatter(client['long'], client['lat'], marker=',', color=col)
+
 def plot_client_routes(open_w, warehouses, routes, clients):
-    for key,value in warehouses.items():
-        if key in open_w:
-            plt.scatter(value['long'], value['lat'], marker='^', color='red')
-            #plot routes that start from the depot
-            depot_routes = [r for (w,r) in routes.keys() if w == key]
-            for dr in depot_routes:
-                routes[dr]['id_route']
-                
-                
-                plt.scatter(c['long'], c['lat'], marker='o', color='black')
-    
-    # visited = list()
-    # do_magic = True
-    # temp_clients = clients.copy()
+    colors = ['black','green','purple','orange']
+    counter = 0
+    for ow in open_w:
+        plt.scatter(warehouses[ow]['long'], warehouses[ow]['lat'], marker='^', color='red')
+        #plot routes that start from the depot
+        depot_routes = [r for (w,r) in routes.keys() if w == ow]
+        for dr in depot_routes:
+            route_clients = routes[(ow,dr)]['ids']
+            plot_cr(route_clients, clients, colors[counter])
+        counter += 1
+            # for i,rc in enumerate(route_clients):
+            #     if i == 0:
+            #         c_0 = [{'lat': warehouses[ow]['lat'],
+            #                 'long': warehouses[ow]['long']}]  
+            #         c_1 = get_coordinates(route_clients[i+1],clients)
+            #         plt.plot([c_0['long'], c_1['long']],[c_0['lat'], c_1['lat']],'b--')
+            #     elif i == (len(route_clients)-2):
+            #         c_1 = [{'lat': warehouses[ow]['lat'],
+            #                 'long': warehouses[ow]['long']}]  
+            #         c_0 = get_coordinates(route_clients[i],clients)
+            #         plt.plot([c_0['long'], c_1['long']],[c_0['lat'], c_1['lat']],'b--')
+            #     else:
+            #         c_0 = get_coordinates(route_clients[i], clients)
+            #         c_1 = get_coordinates(route_clients[i+1], clients)
+            #         plt.plot([c_0['long'], c_1['long']],[c_0['lat'], c_1['lat']],'b--')
     plt.show()
-    
-    
-    # 
-    # tour_length = 0
-    # 
-    # first_client = random.choice(temp_clients)
-    # visited.append(first_client)
-    # temp_clients.remove(first_client) 
-    # to_visit = closest_distance(first_client, dist_matrix, temp_clients)
-    # counter = 0
-    # while do_magic:
-    #     plt.title('Nearest neighbour heuristic')
-    #     if len(visited) < 2:
-    #         plt.plot([data_json[int(first_client)]['long'], data_json[int(to_visit[0])]['long']],
-    #                 [data_json[int(first_client)]['lat'], data_json[int(to_visit[0])]['lat']],
-    #                 'b--')
-    #         from_client = to_visit[0] #client already visited, new starting point
-    #         temp_clients.remove(from_client) 
-    #         visited.append(from_client)
-    #         tour_length += to_visit[1]['distance(km)']
-    #         to_visit = closest_distance(from_client, dist_matrix, temp_clients)
-    #     else: 
-    #         plt.plot([data_json[int(from_client)]['long'], data_json[int(to_visit[0])]['long']],
-    #                 [data_json[int(from_client)]['lat'], data_json[int(to_visit[0])]['lat']],
-    #                 'b--')
-    #         visited.append(to_visit[0])
-    #         from_client = to_visit[0]
-    #         temp_clients.remove(from_client) 
-    #         tour_length += to_visit[1]['distance(km)']
-    #         to_visit = closest_distance(from_client, dist_matrix, temp_clients)
-    #         if len(temp_clients) == 0:
-    #             plt.plot([data_json[int(from_client)]['long'], data_json[int(first_client)]['long']],
-    #                 [data_json[int(from_client)]['lat'], data_json[int(first_client)]['lat']],
-    #                 'b--')
-    #             do_magic = False 
-    #     counter = counter + 1 
-    # plt.show()
+   
 def tour_length(tour:list,dist_matrix:dict) -> int:
     t_lenght = 0
     arcs = list()
