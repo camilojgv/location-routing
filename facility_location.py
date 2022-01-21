@@ -173,7 +173,6 @@ def main(params:dict):
     
     #iterate through all clusters and find best results
     best_model = {'fo':0,'variables':None,'iteration':0,'exc_time':0}
-    
     for n_iter,g in enumerate(clusters.keys()):
         G = [int(j) for j in clusters[g].keys()]
         R = route_variable_cost(W, clusters[g], distance_matrix)

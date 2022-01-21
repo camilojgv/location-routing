@@ -1,4 +1,5 @@
 import json
+from turtle import distance
 import nearest_neighbour
 import numpy as np
 import time
@@ -11,7 +12,6 @@ def first_to_last(tour:list):
     tour.append(swap_node)
     return tour
 
-
 def get_client_set(clients:list):
     new_clients = list()
     for c in clients:
@@ -19,7 +19,7 @@ def get_client_set(clients:list):
             new_clients.append(c)
     return new_clients 
 
-def tour_length(tour:list,dist_matrix:dict) -> int:
+def tour_length(tour:list,dist_matrix:dict):
     t_lenght = 0
     arcs = list()
     for index, node in enumerate(tour):
@@ -32,7 +32,7 @@ def tour_length(tour:list,dist_matrix:dict) -> int:
             arcs.append(dist_matrix[str(previous_node)]["destinations"][str(node)]["distance(km)"])
     return t_lenght, arcs
 
-def tour_duration(tour:list,dist_matrix:dict) -> int:
+def tour_duration(tour:list,dist_matrix:dict):
     t_duration = 0
     arcs = list()
     service = np.squeeze(np.random.normal(35,10,1))
@@ -45,6 +45,16 @@ def tour_duration(tour:list,dist_matrix:dict) -> int:
             t_duration += round(dist_matrix[str(previous_node)]["destinations"][str(node)]["time(min)"] + service,1)
             arcs.append(round(dist_matrix[str(previous_node)]["destinations"][str(node)]["time(min)"] + service, 1))
     return t_duration, arcs
+
+def tour_weight(tour:list,clients:object):
+    t_weight = 0
+    arcs = list()
+    for index, node in enumerate(tour):
+        weight = clients.iloc[int(node)]
+        weight = weight['KG_DEMAND']
+        t_weight += round(weight)
+        arcs.append(round(weight))
+    return t_weight, arcs
 
 def one_clust(nodes_json, dist_matrix, clients, params):
     np.random.seed()
@@ -163,26 +173,50 @@ def main_clust(dist_matrix, clients, params):
 def main(dist_matrix, clients, params):
     main_dict = dict()
     clusts = main_clust(dist_matrix, clients, params)
-    counter = 0
-    n1 = len(clusts.items())
     for key,value in clusts.items():
         main_dict[key] = dict()
         for routes in value.keys():
             tour, id_tour = nearest_neighbour.clusters(dist_matrix, clusts[key][routes]['route'])
             new_length, dist_arcs = tour_length(tour, dist_matrix)
             new_duration, time_arcs = tour_duration(tour, dist_matrix)
-            new_weight = clusts[key][routes]['weight']
+            new_weight, weight_arcs = tour_weight(tour, clients)
             main_dict[key][routes] = {'route': tour, 
                                     'id_route': id_tour,
                                     'duration': round(new_duration, 3),
                                     'distance': round(new_length, 3),
-                                    'weight': new_weight}
-
+                                    'weight': new_weight,
+                                    'duration_arcs': time_arcs,
+                                    'distance_arcs': dist_arcs,
+                                    'weight_demands': weight_arcs}
     return main_dict
 
 if __name__ == '__main__':
     print('clustering module')
-
+    instances = [(20,5),(50,5),(50,10), 
+                (100,5),(100,10),(100,20),
+                (150,10),(150,20),(200,10),
+                (200,20),(300,10),(500,10), 
+                (700,10),(860,10),(300,20), 
+                (500,20),(700,20),(860,20),
+                (300,35),(500,35),(700,35),
+                (860,35)]
+    
+    dm = open('Data/distance_matrix.json')
+    distance_matrix = json.load(dm)
+    print('\tdistance matrix -> ok\n')
+    warehouses = pd.read_csv('Data/potential_warehouses.csv')
+    print('\twarehouses -> ok\n')
+    clients = pd.read_csv('Data/client_hardwares.csv')
+    print('\tclients -> ok\n')
+    for (c,w) in instances:
+        params = {'client_sample': c,
+                    'warehouse_sample': w,
+                    'max_distance': 25,
+                    'max_duration': 8*60, 
+                    'max_weight': 8000}
+        print('instance -> \n\tclients -> {}\n\twarehouses -> {}'.format(c,w))
+        clusters = main(distance_matrix, clients, params)
+        np.save('tsp_clusters/instance_c{}_w{}.npy'.format(c,w), clusters)
     
     
 

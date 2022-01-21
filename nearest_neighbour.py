@@ -1,12 +1,7 @@
-import json
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from operator import itemgetter
-import itertools
-import time
-import sys
-from collections import defaultdict
+
 
 def closest_distance(client:str, matrix:dict, clients_list:list):
     client_matrix = matrix[str(client)]['destinations']

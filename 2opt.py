@@ -75,10 +75,6 @@ def find_granular_neighbourhoods(dist_matrix:dict) -> list:
         avg_distance =  round(np.mean([in_val['distance(km)'] 
                                 for in_key, in_val in value["destinations"].items()
                                 if (value['type'] != 'warehouse' and in_val['type'] != 'warehouse')]),3)
-        
-    
-    
-    
     return tour_neighbours
 
 def nearest_neighbour_algorithm(data_json:dict, dist_matrix:dict, clients:list, warehouses:list):
@@ -148,9 +144,6 @@ def two_opt(tour_nearest:list, length_nearest:float, dist_matrix:dict, nodes_jso
     threshold = find_granular_neighbourhoods(dist_matrix)
 
     while improved:
-        sys.stdout.write('\r')
-        sys.stdout.write('iteration {}, elapsed time: {} minutes'.format(laps, round((time.time()-start_time)/60, 3)))
-        sys.stdout.flush()
         improved = False
         tour_1 = tour_nearest[0:size-3]
         for i, c_i in enumerate(tour_1): # initial nodes i
@@ -240,34 +233,4 @@ def two_opt(tour_nearest:list, length_nearest:float, dist_matrix:dict, nodes_jso
     return tour_nearest, length_best_tour
 
 if __name__ == '__main__':
-    start_time = time.time()
-    data_path = {'tul': 'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/locations_data.json',
-                'home': 'E:/Main User/Documents/Repositories/VRP/Data/locations_data.json'}
-    distance_matrix_path = {'tul':'C:/Users/NECSOFT/Documents/Repositories/LRP/Data/distance_matrix_7am.json',
-                            'home':'E:/Main User/Documents/Repositories/VRP/Data/distance_matrix_7am.json'}
-    nodes = open(data_path['home'])
-    nodes_json = json.load(nodes)
-    
-    matrix_file = open(distance_matrix_path['home'])
-    dist_matrix = json.load(matrix_file)
-    
-    # Create insertion heuristics
-    # Let's extract a example from the json
-    n_warehouses = 0
-    n_clients = 50
-
-    np.random.seed()
-    clients, warehouses = data_sample(dist_matrix, n_warehouses, n_clients)
-    
-    # 1. Run TSP with best simplest heuristic. Initial sol S0
-    tour_nearest, length_nearest = nearest_neighbour_algorithm(nodes_json, dist_matrix, clients, warehouses)
-    tour_nearest = [warehouses[0]] + tour_nearest
-    initial_tour = tour_nearest.copy()
-    
-    print('Start 2-opt with tabu','*'*40)
-    print('\ninitial tour -> {}'.format(initial_tour))
-    tour_nearest, length_best_tour = two_opt(tour_nearest, length_nearest, dist_matrix, nodes_json)
-    print('\ninitial tour -> {} \nInitial length: {} kms\n'.format(initial_tour, round(length_nearest, 3)))
-    print('last result -> {}\nShortest length: {} kms'.format(tour_nearest, round(length_best_tour, 3)))  
-    exc_time = time.time()-start_time 
-    print('Excecution time: {} minutes'.format(round(exc_time/60, 3)))
+    print('2-opt with tabu')  

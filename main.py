@@ -11,7 +11,6 @@ def get_clients(hardware_stores_path):
     clients = pd.read_csv(hardware_stores_path)
     clients.columns = ['lat', 'long', 'id', 'total_deliveries', 'kg_demand']
     c_dict = clients.to_dict(orient='index')
-    
     return c_dict
 
 def get_warehouses(warehouse_path):
@@ -21,21 +20,19 @@ def get_warehouses(warehouse_path):
     w_dict = warehouses.to_dict(orient='index')
     return  w_dict
 
-def get_routes(clusters_path, n_iter, depot_routes,dist_matrix):
-    clusters_json = open(clusters_path)
-    routes_0 = json.load(clusters_json)
-    routes = routes_0[str(n_iter)]
+def get_routes(clusters, n_iter, depot_routes, dist_matrix):
+    routes = clusters[n_iter]
     r_dict = dict()
     for (w,r) in depot_routes:
-        temp = [int(g) for g in routes[str(r)]['route']]
+        temp = [int(g) for g in routes[r]['route']]
         temp = [w] + temp
         temp.append(w)
-        ids = [int(g) for g in routes[str(r)]['id_route']]
+        ids = [int(g) for g in routes[r]['id_route']]
         ids = [w] + ids
         ids.append(w)
         tour_length, dist_arc = clustering.tour_length(temp, dist_matrix)
         tour_duration, time_arc = clustering.tour_duration(temp, dist_matrix)
-        tour_weight = routes[str(r)]['weight']
+        tour_weight = routes[r]['weight']
         r_dict[(w,r)] = {'ids':ids, 
                         'distance':tour_length,
                         'time':tour_duration,
@@ -54,37 +51,22 @@ def plot_open_depots(open_w, warehouses):
             plt.scatter(value['long'], value['lat'], marker='o', color='white')
     plt.show()
 
-def plot_cr(route_clients:list, clients:dict, col:str):
+def scatter_cr(route_clients:list, clients:dict, col:str):
     for rc in route_clients[1:len(route_clients)-2]:
         client = get_coordinates(rc,clients)
-        plt.scatter(client['long'], client['lat'], marker=',', color=col)
+        plt.scatter(client['long'], client['lat'], marker='.', color=col)
 
-def plot_client_routes(open_w, warehouses, routes, clients):
+def plot_client_coverage(open_w, warehouses, routes, clients):
     colors = ['black','green','purple','orange']
     counter = 0
     for ow in open_w:
-        plt.scatter(warehouses[ow]['long'], warehouses[ow]['lat'], marker='^', color='red')
+        plt.scatter(warehouses[ow]['long'], warehouses[ow]['lat'], marker='D', color='red')
         #plot routes that start from the depot
         depot_routes = [r for (w,r) in routes.keys() if w == ow]
         for dr in depot_routes:
             route_clients = routes[(ow,dr)]['ids']
-            plot_cr(route_clients, clients, colors[counter])
+            scatter_cr(route_clients, clients, colors[counter])
         counter += 1
-            # for i,rc in enumerate(route_clients):
-            #     if i == 0:
-            #         c_0 = [{'lat': warehouses[ow]['lat'],
-            #                 'long': warehouses[ow]['long']}]  
-            #         c_1 = get_coordinates(route_clients[i+1],clients)
-            #         plt.plot([c_0['long'], c_1['long']],[c_0['lat'], c_1['lat']],'b--')
-            #     elif i == (len(route_clients)-2):
-            #         c_1 = [{'lat': warehouses[ow]['lat'],
-            #                 'long': warehouses[ow]['long']}]  
-            #         c_0 = get_coordinates(route_clients[i],clients)
-            #         plt.plot([c_0['long'], c_1['long']],[c_0['lat'], c_1['lat']],'b--')
-            #     else:
-            #         c_0 = get_coordinates(route_clients[i], clients)
-            #         c_1 = get_coordinates(route_clients[i+1], clients)
-            #         plt.plot([c_0['long'], c_1['long']],[c_0['lat'], c_1['lat']],'b--')
     plt.show()
    
 def tour_length(tour:list,dist_matrix:dict) -> int:
@@ -120,27 +102,23 @@ def get_lists(vars:dict):
 
 if __name__=='__main__':
     start_time = time.time()
- 
-    print('get results from FL problem\n')
-    fl_model = np.load('optimization_results/flp_results_rcopt_c860_w35.npy',allow_pickle='TRUE').item()
+    ins = (860,35)
+    print('get results hybrid algorithm\n')
+    fl_model = np.load('optimization_results/flp_results_rcopt_c{}_w{}.npy'.format(ins[0],ins[1]),allow_pickle='TRUE').item()
     print('get other information, warehouses, clients, routes\n')
-    warehouse_path = 'Data/potential_warehouses.csv'
-    hardware_stores_path = 'Data/client_hardwares.csv'
-    clusters_path = 'Data/tsp_clusters.json'
-    distance_matrix_path = 'Data/distance_matrix.json'
-    dm_json = open(distance_matrix_path)
-    dist_matrix = json.load(dm_json)
-
-    warehouses = get_warehouses(warehouse_path)
+    
+    clusters_path = np.load('tsp_clusters/instance_c{}_w{}.npy'.format(ins[0],ins[1]),allow_pickle='TRUE').item()
+    distance_matrix = json.load(open( 'Data/distance_matrix.json'))
+    warehouses = get_warehouses('Data/potential_warehouses.csv')
     print('\twarehouses -> ok\n')
-    clients = get_clients(hardware_stores_path)
+    clients = get_clients('Data/client_hardwares.csv')
     print('\tclients -> ok\n')
     open_depots, depot_routes = get_lists(fl_model['variables'])
-    routes = get_routes(clusters_path, fl_model['iteration'], depot_routes, dist_matrix)
+    routes = get_routes(clusters_path, fl_model['iteration'], depot_routes, distance_matrix)
     print('\troutes -> ok\n')
     
     #plot_open_depots(open_depots, warehouses)
-    plot_client_routes(open_depots, warehouses, routes, clients)
+    plot_client_coverage(open_depots, warehouses, routes, clients)
     summarize_dict = dict()
     for od in open_depots:
         summarize_dict[od] = {'avg_distance': np.mean([routes[(w,r)]['distance'] for (w,r) in routes.keys() if w == od]),

@@ -1,2 +1,0 @@
-PROBLEM_FILE = PROBLEM_DIR2.txt
-OUTPUT_TOUR_FILE = results2.txt
