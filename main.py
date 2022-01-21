@@ -103,25 +103,43 @@ def get_lists(vars:dict):
 if __name__=='__main__':
     start_time = time.time()
     ins = (860,35)
+    instances = [(20,5), (50,5), (50,10), 
+                (100,5),(100,10),(100,20),
+                (150,10),(150,20),(200,10),
+                (200,20),(300,10),(500,10),
+                (700,10),(860,10),(300,20),
+                (500,20),(700,20),(860,20),
+                (300,35),(500,35),(700,35),
+                (860,35)]
+    
     print('get results hybrid algorithm\n')
     fl_model = np.load('optimization_results/flp_results_rcopt_c{}_w{}.npy'.format(ins[0],ins[1]),allow_pickle='TRUE').item()
     print('get other information, warehouses, clients, routes\n')
     
-    clusters_path = np.load('tsp_clusters/instance_c{}_w{}.npy'.format(ins[0],ins[1]),allow_pickle='TRUE').item()
+    clusters = np.load('tsp_clusters/instance_c{}_w{}.npy'.format(ins[0],ins[1]),allow_pickle='TRUE').item()
     distance_matrix = json.load(open( 'Data/distance_matrix.json'))
     warehouses = get_warehouses('Data/potential_warehouses.csv')
     print('\twarehouses -> ok\n')
     clients = get_clients('Data/client_hardwares.csv')
     print('\tclients -> ok\n')
     open_depots, depot_routes = get_lists(fl_model['variables'])
-    routes = get_routes(clusters_path, fl_model['iteration'], depot_routes, distance_matrix)
+    routes = get_routes(clusters, fl_model['iteration'], depot_routes, distance_matrix)
     print('\troutes -> ok\n')
     
     #plot_open_depots(open_depots, warehouses)
     plot_client_coverage(open_depots, warehouses, routes, clients)
     summarize_dict = dict()
     for od in open_depots:
-        summarize_dict[od] = {'avg_distance': np.mean([routes[(w,r)]['distance'] for (w,r) in routes.keys() if w == od]),
-                                'avg_weight': np.mean([routes[(w,r)]['weight'] for (w,r) in routes.keys() if w == od]),
-                                'avg_time': np.mean([routes[(w,r)]['time'] for (w,r) in routes.keys() if w == od])}
+        summarize_dict[od] = {'avg_distance': (np.mean([routes[(w,r)]['distance'] for (w,r) in routes.keys() if w == od]),
+                                               np.std([routes[(w,r)]['distance'] for (w,r) in routes.keys() if w == od])),
+                                'avg_weight': (np.mean([routes[(w,r)]['weight'] for (w,r) in routes.keys() if w == od]),
+                                               np.std([routes[(w,r)]['weight'] for (w,r) in routes.keys() if w == od])),
+                                'avg_time': (np.mean([routes[(w,r)]['time'] for (w,r) in routes.keys() if w == od]),
+                                             np.std([routes[(w,r)]['time'] for (w,r) in routes.keys() if w == od]))}
+    instance_times = dict()
+    obj_func = dict()
+    for (c,w) in instances:
+        model = np.load('optimization_results/flp_results_rcopt_c{}_w{}.npy'.format(c,w),allow_pickle='TRUE').item()
+        instance_times[(c,w)] = model['exc_time']
+        obj_func[(c,w)] = model['fo']
     print('lets go, execution time -> {}'.format(time.time()-start_time)) 
