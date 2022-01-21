@@ -6,7 +6,7 @@ import pandas as pd
 import clustering
 from collections import defaultdict
 
-def tour_length(tour:list,dist_matrix:dict) -> int:
+def tour_length(tour:list,dist_matrix:dict) -> float:
     t_lenght = 0
     arcs = list()
     for index, node in enumerate(tour):
@@ -18,7 +18,7 @@ def tour_length(tour:list,dist_matrix:dict) -> int:
             t_lenght += dist_matrix[str(previous_node)]["destinations"][str(node)]["distance(km)"]
     return t_lenght
 
-def tour_duration(tour:list,dist_matrix:dict) -> int:
+def tour_duration(tour:list,dist_matrix:dict) -> float:
     t_duration = 0
     arcs = list()
     for index, node in enumerate(tour):
@@ -29,7 +29,7 @@ def tour_duration(tour:list,dist_matrix:dict) -> int:
             previous_node = tour[index-1]
             t_duration += dist_matrix[str(previous_node)]["destinations"][str(node)]["time(min)"]
             arcs.append(dist_matrix[str(previous_node)]["destinations"][str(node)]["time(min)"])
-    return t_duration, arcs
+    return t_duration
 
 def get_clients(hardware_stores_path):
     clients = pd.read_csv(hardware_stores_path)
@@ -86,10 +86,13 @@ def find_granular_neighbourhoods(beta:float, dist_matrix:dict) -> dict:
         tour_neighbours[int(key)] = candidates    
     return tour_neighbours
 
-def insertion():
+def swap():
+    return 'hello world'
+
+def customer_insertion():
     return 'hello'
 
-def two_opt(tour_a:list, tour_b:list):
+def two_exchange(tour_a:list, tour_b:list, dist_matrix:dict, candidates:dict):
     improved = True
     nserted_tabu_arcs = set() #arcs deleted
     removed_tabu_arcs = set() #arcs added
@@ -97,21 +100,27 @@ def two_opt(tour_a:list, tour_b:list):
     max_tabu_iterations = 18
     sparsification_factor = 1.9
     #threshold = find_granular_neighbourhoods(dist_matrix)
-    a_len = len(tour_a)
-    b_len = len(tour_b)
     while improved:
         improved = False
-        for i,a in enumerate(tour_a[0:a_len-1]): # dont visit final 2 nodes
-            for j,b in enumerate(tour_b[1:b_len]):
-                continue
-                #tour_2 = tour_nearest[i+2:size]
+        for a in tour_a[1:len(tour_a)-1]: 
+            for b in tour_b[1:len(tour_b)-1]:
+                i = tour_a.index(a)
+                j = tour_b.index(b)
+                current_distance = (dist_matrix[str(tour_a[i-1])]['destinations'][str(tour_a[i])]['distance(km)'] + 
+                                    dist_matrix[str(tour_b[j-1])]['destinations'][str(tour_b[j])]['distance(km)'])
+                swap_distance = (dist_matrix[str(tour_a[i-1])]['destinations'][str(tour_b[j])]['distance(km)'] + 
+                                dist_matrix[str(tour_b[j-1])]['destinations'][str(tour_a[i])]['distance(km)'])
+                # Best gain possible is possitive
+                arc_gain = current_distance - swap_distance 
+                if arc_gain > 0:
+                    tour_a, tour_b = swap((tour_a, a), (tour_b, b))
+                    improved = True
+                    break
+                
     return 'hello'
 
-def two_exchange():
+def two_customer_exchange():
     return 'hello'
-
-def inter_tour_exchange():
-    return 'hello' 
 
 def main():
      return 'hello'
